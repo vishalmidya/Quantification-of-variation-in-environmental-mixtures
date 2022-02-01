@@ -52,10 +52,7 @@ make.B1 <- function(n, p0, p1, R2_0, R2_1, sigma2,X0,X1){
   
   A <- K11 *(1 - R2_1)
   B <-  B0 * (K10 + K01) *( 1 - R2_1)
-  C <- (B0^2 * K00 + sigma2 * (p0 + p1 - 1) - R2_1 *((n-1)*sigma2 + B0^2 * K00))
-  
-  # C is a constant : doesn't depend on X0 or X1 but depends on n and delta
-  
+  C <- (B0^2 * K00 + sigma2 * (p0 + p1 - 1) - R2_1 *((n-1)*sigma2 + B0^2 * K00))  
   return((- B + sqrt(B^2 - 4*A*C))/(2*A))
   
 }
