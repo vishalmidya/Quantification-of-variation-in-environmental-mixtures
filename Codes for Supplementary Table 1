@@ -1,0 +1,66 @@
+M=2e5; n=200; p0=5; p1=3; rho=0.6; sigma2=1; R2_0=0.2; delta = 0.06
+
+# set.seed(1123456)
+# set.seed(1111111)
+# set.seed(1230987)
+# set.seed(4567)
+
+X0 <- make.X0(n, rho, p0)
+
+# set.seed(1123456)
+# set.seed(1111111)
+# set.seed(1230987)
+# set.seed(4567)
+
+X1 <- make.X1(n, rho, p0, p1)
+
+R2_1 = (R2_0 + delta)/(1 + delta)
+Tn = cutoff_finder_normal(p1,n, delta)
+X0_data <- data.frame(X0)
+colnames(X0_data) <- c("X01","X02","X03","X04","X05")
+X1_data <- data.frame(X1)
+colnames(X1_data) <- c("X11","X12","X13")
+
+alpha_calibrated <- 0
+beta_calibrated <- 0
+lrt_H0 <- numeric(M)
+lrt_H1 <- numeric(M)
+
+for(i in 1:M){
+  
+  set.seed(runif(1,-1e4,1e4))
+  y_H1 <- make.y.under.H1(n, p0, p1, sigma2, R2_0, R2_1, X0, X1)
+  
+  data_wqs_H1 <- cbind(X0_data,X1_data,y_H1)
+  
+  results_H1_1 <- lm(y_H1 ~ X01 + X02 + X03 + X04 + X05 + X11 + X12 + X13 , data = data_wqs_H1)
+  
+  results_H1_0 <- lm(y_H1 ~  X01 + X02 + X03 + X04 + X05, data = data_wqs_H1)
+  
+  lrt_H1[i] <- 2*(logLik(results_H1_1) - logLik(results_H1_0))
+  
+  if( lrt_H1[i] < Tn){
+    beta_calibrated = beta_calibrated + 1
+  }
+  
+  set.seed(runif(1,-1e4,1e4))
+  y_H0 <- make.y.under.H0(n, p0, sigma2, R2_0, X0)
+  
+  data_wqs_H0 <- cbind(X0_data,X1_data,y_H0)
+  
+  results_H0_1 <- lm(y_H0 ~ X01 + X02 + X03 + X04 + X05 + X11 + X12 + X13 ,
+                     data = data_wqs_H0)
+  
+  results_H0_0 <- lm(y_H0 ~ X01 + X02 + X03 + X04 + X05, data = data_wqs_H0)
+  
+  lrt_H0[i] <- 2*(logLik(results_H0_1) - logLik(results_H0_0))
+  
+  if(lrt_H0[i] > Tn){
+    alpha_calibrated = alpha_calibrated + 1
+  }
+  
+}
+
+alpha.cal = alpha_calibrated/M
+beta.cal = beta_calibrated/M
+
