@@ -82,7 +82,7 @@ make.y.under.H1 <- function(n, p0, p1, sigma2,R2_0, R2_1, X0,X1){
   
 }
 
-# Numerically estimate T, the calibrated cutoff with specified p_1
+# Numerically estimate T, the calibrated cutoff with specified $p_1$, n and $\delta$
 
 cutoff_finder_normal = function(p1, n, delta)
 {
@@ -91,6 +91,21 @@ cutoff_finder_normal = function(p1, n, delta)
   
 }
 
+# Numerical estimate of rate of change of T as n \to \infty
+
+numerical_rate_normal = function(p1, n,  delta){
+  
+  n1 = 3e4; n2 = 3e4+1   
+  (cutoff_finder_normal(p1, n2, delta) - cutoff_finder_normal(p1, n1, delta))/(n2 - n1)
+  
+}
+
+# Calculates type 2 error  
+
+beta_func <- function(p1, n, delta, epsilon){
+  T = cutoff_finder_normal(p1, n, delta)
+  pnorm((T - p1 - n*epsilon)/sqrt(2*(p1 + 2*n*epsilon)))
+}
 
 
 
