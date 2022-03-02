@@ -60,4 +60,76 @@ core_H = as.data.frame(core_H)
 
 
 # These codes are modified based on original codes from Nicolo Foppa Pedretti (https://www.medrxiv.org/content/10.1101/19010710v1)
+# Figure 3 and 4 are based on similar codes from Figure 2 but with a different dataset and uses WQS as its main exposure mixture model.
+# Below we present the codes for both continuous and binary outcomes for LBDLDL in case of PFAS exposures 
+
+# Optimal impact for Continuous LBDLDL
+
+data = ecc_data
+exposures_PFAS = c("LBXPFDE","LBXPFHS","LBXMPAH","LBXPFNA","LBXPFUA","LBXNFOA","LBXNFOS","LBXMFOS")
+family = "gaussian"
+q = 10; validation = 0; b = 250; seed = 123123123
+b1_pos = as.logical(T)
+M = 100 
+n_optim = 5000   
+n_whole = dim(data)[1]
+k = 2 + sqrt(2);
+
+wqs_est_optim <- NA_real_
+wqs_se_optim <- NA_real_
+wqs_pval_est_optim <- NA_real_
+wqs_lrt_est_optim  <- NA_real_
+delta_value_optim <- NA_real_
+R1_optim <- NA_real_
+R0_optim <- NA_real_
+
+# LDL_optim_data_equivalence_PFAS <- data.frame(wqs_est = NA_real_, wqs_se = NA_real_, wqs_pval = NA_real_,
+#                         lrt = NA_real_, delta_value = NA_real_,
+#                         R0 = NA_real_, R1 = NA_real_)
+
+LDL_optim_data_equivalence_PFAS <- read.csv("..../LDL_optim_data_equivalence_PFAS.csv")
+
+for(i in 1:M){
+  
+  data_optim <- data[sample(rownames(data), n_optim, replace = T),]
+  glm_optim <- glm(LBDLDL ~   RIAGENDR + RIDAGEYR + INDFMPIR + WTMEC2YR + RIDRETH1 + BMXBMI
+                   + smoking_status,  family = family,  data = data_optim)
+  
+  wqs_optim <- gwqs(LBDLDL ~ wqs + RIAGENDR + RIDAGEYR + INDFMPIR + WTMEC2YR + RIDRETH1 + BMXBMI
+                    + smoking_status, mix_name = exposures_PFAS, data = data_optim,
+                    q = q, validation = validation, b = 250, b1_pos = T,signal = "expt", rs = F,
+                    family = family, plan_strategy = "multicore", future.seed= T)
+  
+  summary_wqs_optim <- summary(wqs_optim)
+  
+  wqs_est_optim  <- summary_wqs_optim$coefficients["wqs","Estimate"]
+  wqs_se_optim <- summary_wqs_optim$coefficients["wqs","Std. Error"]
+  wqs_pval_est_optim  <- summary_wqs_optim$coefficients["wqs","Pr(>|t|)"]
+  wqs_lrt_est_optim = (2*(logLik(wqs_optim$fit) - logLik(glm_optim)))
+  delta_value_optim = as.numeric(wqs_lrt_est_optim/n_optim)  * (2*k-1)
+  
+  LDL_optim_data_equivalence_PFAS <- as.data.frame(rbind(LDL_optim_data_equivalence_PFAS, 
+                                                    c(wqs_est_optim,wqs_se_optim,wqs_pval_est_optim,
+                                                      wqs_lrt_est_optim,delta_value_optim,
+                                                      R0_optim,R1_optim)))
+  
+  write.csv(LDL_optim_data_equivalence_PFAS, "..../LDL_optim_data_equivalence_PFAS.csv", row.names = F)
+  
+}
+
+
+# Optimal impact for Binary LBDLDL
+
+ecc_data$LBDLDL <- ifelse(ecc_data$LBDLDL >= as.numeric(quantile(ecc_data$LBDLDL,0.9)), 1, 0) 
+
+
+
+data = ecc_data
+family = "binomial"
+q = 10; validation = 0; b = 500; seed = 123123123
+b1_pos = as.logical(T)
+M = 100
+n_optim = 5000
+n_whole = dim(data)[1]
+k = 2 + sqrt(2);
 
