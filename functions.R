@@ -107,6 +107,19 @@ beta_func <- function(p1, n, delta, epsilon){
   pnorm((T - p1 - n*epsilon)/sqrt(2*(p1 + 2*n*epsilon)))
 }
 
+# Numerical approximation of log(Type 1) or log(type 2) error based on equation 6
 
+numerical_log_error <- function(p1, n, delta){
+  T = cutoff_finder_normal(p1, n, delta)
+  x = (T-p1-n*delta)/sqrt(2*(p1+2*n*delta))
+  (pnorm(x, log.p = T))
+}
+
+# Rate of change of log(Type 1) or log(type 2) as n \to \infty
+
+numerical_log_error_rate <- function(p1, n, delta){
+  n1 = n; n2 = n +1   
+  (numerical_log_error(p1, n2, delta) - numerical_log_error(p1, n1, delta))/(n2 - n1)
+}
 
 
