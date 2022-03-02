@@ -1,3 +1,5 @@
+# Creates the Variance-covariance matrix
+
 make.SIGMA <- function(rho,dimension){
   SIGMA = matrix(NA,dimension,dimension)
   for(i in 1:dimension){
@@ -12,22 +14,25 @@ make.SIGMA <- function(rho,dimension){
       }
     }
   }
-  
   (SIGMA + t(SIGMA))/2
 }
+
+# Design matrix for baseline covariates and confounders
 
 make.X0 <- function(n, rho, p0){
   X0 <- (mvtnorm::rmvnorm(n, mean = rep(0, nrow(make.SIGMA(rho, p0))), sigma = make.SIGMA(rho, p0)))
 }
 
+# Design matrix for exposures or exposure mixture 
 
 make.X1 <- function(n, rho, p0, p1){
   X0 <- make.X0(n, rho, p0)
   X1 <- mvtnorm::rmvnorm(n, mean = rep(0, nrow(make.SIGMA(rho, p1))), sigma = make.SIGMA(rho, p1))
   
   ((diag(1,n) - X0 %*% solve(t(X0) %*% X0) %*% t(X0)) %*%  X1)
-  
 }
+
+# Beta coefficents for baseline covariates such that the $R^2$ is fixed
 
 make.B0 <- function(n, p0, R2_0, sigma2, X0){
   
@@ -39,6 +44,9 @@ make.B0 <- function(n, p0, R2_0, sigma2, X0){
   return(sqrt(num/den))
   
 }  
+
+# Beta coefficents for Exposures such that the $R^2$ is fixed for the larger model given the beta coefficients for the smaller model
+
 
 make.B1 <- function(n, p0, p1, R2_0, R2_1, sigma2,X0,X1){
   
@@ -57,11 +65,14 @@ make.B1 <- function(n, p0, p1, R2_0, R2_1, sigma2,X0,X1){
   
 }
 
+# Generate y under the null
+
 make.y.under.H0 <- function(n, p0, sigma2,R2_0, X0){
   
   (X0 %*%  (matrix(rep(1,p0), p0 ,1) %*% make.B0(n, p0, R2_0, sigma2, X0)) + rnorm(n,0, sigma2))
-  
 }
+
+# Generate y under the alternative
 
 make.y.under.H1 <- function(n, p0, p1, sigma2,R2_0, R2_1, X0,X1){
   
@@ -71,12 +82,16 @@ make.y.under.H1 <- function(n, p0, p1, sigma2,R2_0, R2_1, X0,X1){
   
 }
 
+# Numerically estimate T, the calibrated cutoff
+
 cutoff_finder_normal = function(p1, n, delta)
 {
   f1 = function(T) pchisq(T, df=p1, lower.tail = FALSE) - pnorm( (T-p1-n*delta)/sqrt(2*(p1+2*n*delta)) )
   uniroot(f1, lower=0, upper=1e8, extendInt="yes", maxiter = 1e9, tol =  .Machine$double.eps^0.75)$root
   
 }
+
+
 
 
 
