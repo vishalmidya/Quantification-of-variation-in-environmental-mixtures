@@ -1,0 +1,576 @@
+# Refer to Simulated examples
+
+## Create Simulated Data set
+
+n=300; p0=5; p1=1; rho=0.3; sigma2=5; R2_0=0.2; k = 2 + sqrt(2)
+delta = 0.01
+
+set.seed(111)
+X0 <- make.X0(n, rho, p0)
+set.seed(111)
+X1 <- make.X1(n, rho, p0, p1)
+
+set.seed(1234)
+y_H1 <- make.y.under.H1(n, p0, p1, sigma2, R2_0, R2_1, X0, X1)
+
+M = 2000;
+
+## Calculate optimal impact based on 5000 bootstrapped samples from the orginal sample of size 300 and repeat for 2000 times
+
+start.time <- Sys.time()
+
+n_whole = dim(data_true)[1]
+k = 2 + sqrt(2);
+n_optim = 5000
+
+lm_est_optim <- NA_real_
+lm_se_optim <- NA_real_
+lm_pval_est_optim <- NA_real_
+lm_lrt_est_optim  <- NA_real_
+delta_star_optim <- NA_real_
+R1_optim <- NA_real_
+R0_optim <- NA_real_
+
+# SIMULATION_optim_data_equivalence <- data.frame(lm_est = NA_real_, lm_se = NA_real_, lm_pval = NA_real_,
+#                         lrt = NA_real_, delta_star = NA_real_,
+#                         R0 = NA_real_, R1 = NA_real_)
+
+SIMULATION_optim_data_equivalence <- read.csv("...../SIMULATION_optim_data_equivalence.csv")
+
+for(i in 1:M){
+  
+  data_optim <- data_true[sample(rownames(data_true), n_optim, replace = T),]
+  
+  optim_H1_0 <- lm(y_H1 ~  X01 + X02 + X03 + X04 + X05, data = data_optim)
+  optim_H1_1 <- lm(y_H1 ~ X01 + X02 + X03 + X04 + X05 + X11, data = data_optim)
+  
+  summary_lm_optim <- summary(optim_H1_1)
+  
+  lm_est_optim  <- summary_lm_optim$coefficients["X11","Estimate"]
+  lm_se_optim <- summary_lm_optim$coefficients["X11","Std. Error"]
+  lm_pval_est_optim  <- summary_lm_optim$coefficients["X11","Pr(>|t|)"]
+  lm_lrt_est_optim = (2*(logLik(optim_H1_1) - logLik(optim_H1_0)))
+  delta_star_optim = as.numeric(lm_lrt_est_optim/n_optim) * (2*k-1)
+  (R0_optim <- summary(optim_H1_0)$r.squared)
+  (R1_optim <- (R0_optim + delta_star_optim)/(1 + delta_star_optim))
+  
+  SIMULATION_optim_data_equivalence <- as.data.frame(rbind(SIMULATION_optim_data_equivalence, 
+                                                    c(lm_est_optim,lm_se_optim,lm_pval_est_optim,
+                                                      lm_lrt_est_optim,delta_star_optim,
+                                                      R0_optim,R1_optim)))
+  
+  write.csv(SIMULATION_optim_data_equivalence, "..../SIMULATION_optim_data_equivalence.csv", row.names = F)
+  
+}
+
+end.time <- Sys.time()
+(time.taken <- end.time - start.time)
+
+# write.csv(SIMULATION_optim_data_equivalence, "..../SIMULATION_optim_data_equivalence.csv", row.names = F)
+
+## Calculate impact based on 2500 bootstrapped samples from the orginal sample of size 300 and repeat for 2000 times
+
+start.time <- Sys.time()
+
+n_whole = dim(data_true)[1]
+k = 2 + sqrt(2);
+n_sim2500 = 2500
+
+lm_est_sim2500 <- NA_real_
+lm_se_sim2500 <- NA_real_
+lm_pval_est_sim2500 <- NA_real_
+lm_lrt_est_sim2500  <- NA_real_
+delta_star_sim2500 <- NA_real_
+R1_sim2500 <- NA_real_
+R0_sim2500 <- NA_real_
+
+# SIMULATION_sim2500_data_equivalence <- data.frame(lm_est = NA_real_, lm_se = NA_real_, lm_pval = NA_real_,
+#                         lrt = NA_real_, delta_star = NA_real_,
+#                         R0 = NA_real_, R1 = NA_real_)
+
+SIMULATION_sim2500_data_equivalence <- read.csv("..../SIMULATION_sim2500_data_equivalence.csv")
+
+for(i in 1:M){
+  
+  data_sim2500 <- data_true[sample(rownames(data_true), n_sim2500, replace = T),]
+  
+  sim2500_H1_0 <- lm(y_H1 ~  X01 + X02 + X03 + X04 + X05, data = data_sim2500)
+  sim2500_H1_1 <- lm(y_H1 ~ X01 + X02 + X03 + X04 + X05 + X11, data = data_sim2500)
+  
+  summary_lm_sim2500 <- summary(sim2500_H1_1)
+  
+  lm_est_sim2500  <- summary_lm_sim2500$coefficients["X11","Estimate"]
+  lm_se_sim2500 <- summary_lm_sim2500$coefficients["X11","Std. Error"]
+  lm_pval_est_sim2500  <- summary_lm_sim2500$coefficients["X11","Pr(>|t|)"]
+  lm_lrt_est_sim2500 = (2*(logLik(sim2500_H1_1) - logLik(sim2500_H1_0)))
+  delta_star_sim2500 = as.numeric(lm_lrt_est_sim2500/n_sim2500) * (2*k-1)
+  (R0_sim2500 <- summary(sim2500_H1_0)$r.squared)
+  (R1_sim2500 <- (R0_sim2500 + delta_star_sim2500)/(1 + delta_star_sim2500))
+  
+  SIMULATION_sim2500_data_equivalence <- as.data.frame(rbind(SIMULATION_sim2500_data_equivalence, 
+                                                           c(lm_est_sim2500,lm_se_sim2500,lm_pval_est_sim2500,
+                                                             lm_lrt_est_sim2500,delta_star_sim2500,
+                                                             R0_sim2500,R1_sim2500)))
+  
+  write.csv(SIMULATION_sim2500_data_equivalence, "..../SIMULATION/SIMULATION_sim2500_data_equivalence.csv", row.names = F)
+  
+}
+
+
+end.time <- Sys.time()
+(time.taken <- end.time - start.time)
+
+# write.csv(SIMULATION_sim2500_data_equivalence, "..../SIMULATION_sim2500_data_equivalence.csv", row.names = F)
+
+## Calculate impact based on 600 bootstrapped samples from the orginal sample of size 300 and repeat for 2000 times
+
+start.time <- Sys.time()
+
+n_whole = dim(data_true)[1]
+k = 2 + sqrt(2);
+n_sim600 = 600;
+
+lm_est_sim600 <- NA_real_
+lm_se_sim600 <- NA_real_
+lm_pval_est_sim600 <- NA_real_
+lm_lrt_est_sim600  <- NA_real_
+delta_star_sim600 <- NA_real_
+R1_sim600 <- NA_real_
+R0_sim600 <- NA_real_
+
+# SIMULATION_sim600_data_equivalence <- data.frame(lm_est = NA_real_, lm_se = NA_real_, lm_pval = NA_real_,
+#                         lrt = NA_real_, delta_star = NA_real_,
+#                         R0 = NA_real_, R1 = NA_real_)
+
+SIMULATION_sim600_data_equivalence <- read.csv("..../SIMULATION_sim600_data_equivalence.csv")
+
+for(i in 1:M){
+  
+  data_sim600 <- data_true[sample(rownames(data_true), n_sim600, replace = T),]
+  
+  sim600_H1_0 <- lm(y_H1 ~  X01 + X02 + X03 + X04 + X05, data = data_sim600)
+  sim600_H1_1 <- lm(y_H1 ~ X01 + X02 + X03 + X04 + X05 + X11, data = data_sim600)
+  
+  summary_lm_sim600 <- summary(sim600_H1_1)
+  
+  lm_est_sim600  <- summary_lm_sim600$coefficients["X11","Estimate"]
+  lm_se_sim600 <- summary_lm_sim600$coefficients["X11","Std. Error"]
+  lm_pval_est_sim600  <- summary_lm_sim600$coefficients["X11","Pr(>|t|)"]
+  lm_lrt_est_sim600 = (2*(logLik(sim600_H1_1) - logLik(sim600_H1_0)))
+  delta_star_sim600 = as.numeric(lm_lrt_est_sim600/n_sim600) * (2*k-1)
+  (R0_sim600 <- summary(sim600_H1_0)$r.squared)
+  (R1_sim600 <- (R0_sim600 + delta_star_sim600)/(1 + delta_star_sim600))
+  
+  SIMULATION_sim600_data_equivalence <- as.data.frame(rbind(SIMULATION_sim600_data_equivalence, 
+                                                            c(lm_est_sim600,lm_se_sim600,lm_pval_est_sim600,
+                                                              lm_lrt_est_sim600,delta_star_sim600,
+                                                              R0_sim600,R1_sim600)))
+  
+  write.csv(SIMULATION_sim600_data_equivalence, "..../SIMULATION/SIMULATION_sim600_data_equivalence.csv", row.names = F)
+  
+}
+
+
+end.time <- Sys.time()
+(time.taken <- end.time - start.time)
+
+# write.csv(SIMULATION_sim600_data_equivalence, "..../SIMULATION_sim600_data_equivalence.csv", row.names = F)
+
+## Calculate impact based on 500 bootstrapped samples from the orginal sample of size 300 and repeat for 2000 times
+
+start.time <- Sys.time()
+
+n_whole = dim(data_true)[1]
+k = 2 + sqrt(2);
+n_sim500 = 500
+
+lm_est_sim500 <- NA_real_
+lm_se_sim500 <- NA_real_
+lm_pval_est_sim500 <- NA_real_
+lm_lrt_est_sim500  <- NA_real_
+delta_star_sim500 <- NA_real_
+R1_sim500 <- NA_real_
+R0_sim500 <- NA_real_
+
+# SIMULATION_sim500_data_equivalence <- data.frame(lm_est = NA_real_, lm_se = NA_real_, lm_pval = NA_real_,
+#                         lrt = NA_real_, delta_star = NA_real_,
+#                         R0 = NA_real_, R1 = NA_real_)
+
+SIMULATION_sim500_data_equivalence <- read.csv("..../SIMULATION_sim500_data_equivalence.csv")
+
+for(i in 1:M){
+  
+  data_sim500 <- data_true[sample(rownames(data_true), n_sim500, replace = T),]
+  
+  sim500_H1_0 <- lm(y_H1 ~  X01 + X02 + X03 + X04 + X05, data = data_sim500)
+  sim500_H1_1 <- lm(y_H1 ~ X01 + X02 + X03 + X04 + X05 + X11, data = data_sim500)
+  
+  summary_lm_sim500 <- summary(sim500_H1_1)
+  
+  lm_est_sim500  <- summary_lm_sim500$coefficients["X11","Estimate"]
+  lm_se_sim500 <- summary_lm_sim500$coefficients["X11","Std. Error"]
+  lm_pval_est_sim500  <- summary_lm_sim500$coefficients["X11","Pr(>|t|)"]
+  lm_lrt_est_sim500 = (2*(logLik(sim500_H1_1) - logLik(sim500_H1_0)))
+  delta_star_sim500 = as.numeric(lm_lrt_est_sim500/n_sim500) * (2*k-1)
+  (R0_sim500 <- summary(sim500_H1_0)$r.squared)
+  (R1_sim500 <- (R0_sim500 + delta_star_sim500)/(1 + delta_star_sim500))
+  
+  SIMULATION_sim500_data_equivalence <- as.data.frame(rbind(SIMULATION_sim500_data_equivalence, 
+                                                            c(lm_est_sim500,lm_se_sim500,lm_pval_est_sim500,
+                                                              lm_lrt_est_sim500,delta_star_sim500,
+                                                              R0_sim500,R1_sim500)))
+  
+  write.csv(SIMULATION_sim500_data_equivalence, "..../SIMULATION_sim500_data_equivalence.csv", row.names = F)
+  
+}
+
+
+end.time <- Sys.time()
+(time.taken <- end.time - start.time)
+
+# write.csv(SIMULATION_sim500_data_equivalence, "..../SIMULATION_sim500_data_equivalence.csv", row.names = F)
+
+## Calculate impact based on 400 bootstrapped samples from the orginal sample of size 300 and repeat for 2000 times
+
+start.time <- Sys.time()
+
+n_whole = dim(data_true)[1]
+k = 2 + sqrt(2);
+n_sim400 = 400
+
+lm_est_sim400 <- NA_real_
+lm_se_sim400 <- NA_real_
+lm_pval_est_sim400 <- NA_real_
+lm_lrt_est_sim400  <- NA_real_
+delta_star_sim400 <- NA_real_
+R1_sim400 <- NA_real_
+R0_sim400 <- NA_real_
+
+# SIMULATION_sim400_data_equivalence <- data.frame(lm_est = NA_real_, lm_se = NA_real_, lm_pval = NA_real_,
+#                         lrt = NA_real_, delta_star = NA_real_,
+#                         R0 = NA_real_, R1 = NA_real_)
+
+SIMULATION_sim400_data_equivalence <- read.csv("..../SIMULATION_sim400_data_equivalence.csv")
+
+for(i in 1:M){
+  
+  data_sim400 <- data_true[sample(rownames(data_true), n_sim400, replace = T),]
+  
+  sim400_H1_0 <- lm(y_H1 ~  X01 + X02 + X03 + X04 + X05, data = data_sim400)
+  sim400_H1_1 <- lm(y_H1 ~ X01 + X02 + X03 + X04 + X05 + X11, data = data_sim400)
+  
+  summary_lm_sim400 <- summary(sim400_H1_1)
+  
+  lm_est_sim400  <- summary_lm_sim400$coefficients["X11","Estimate"]
+  lm_se_sim400 <- summary_lm_sim400$coefficients["X11","Std. Error"]
+  lm_pval_est_sim400  <- summary_lm_sim400$coefficients["X11","Pr(>|t|)"]
+  lm_lrt_est_sim400 = (2*(logLik(sim400_H1_1) - logLik(sim400_H1_0)))
+  delta_star_sim400 = as.numeric(lm_lrt_est_sim400/n_sim400) * (2*k-1)
+  (R0_sim400 <- summary(sim400_H1_0)$r.squared)
+  (R1_sim400 <- (R0_sim400 + delta_star_sim400)/(1 + delta_star_sim400))
+  
+  SIMULATION_sim400_data_equivalence <- as.data.frame(rbind(SIMULATION_sim400_data_equivalence, 
+                                                            c(lm_est_sim400,lm_se_sim400,lm_pval_est_sim400,
+                                                              lm_lrt_est_sim400,delta_star_sim400,
+                                                              R0_sim400,R1_sim400)))
+  
+  write.csv(SIMULATION_sim400_data_equivalence, "..../SIMULATION_sim400_data_equivalence.csv", row.names = F)
+  
+}
+
+
+end.time <- Sys.time()
+(time.taken <- end.time - start.time)
+
+# write.csv(SIMULATION_sim400_data_equivalence, "..../SIMULATION_sim400_data_equivalence.csv", row.names = F)
+
+
+###################################
+
+## Calculate impact based on 300 bootstrapped samples from the orginal sample of size 300 and repeat for 2000 times
+
+start.time <- Sys.time()
+
+n_whole = dim(data_true)[1]
+k = 2 + sqrt(2);
+n_sim300 = 300
+
+lm_est_sim300 <- NA_real_
+lm_se_sim300 <- NA_real_
+lm_pval_est_sim300 <- NA_real_
+lm_lrt_est_sim300  <- NA_real_
+delta_star_sim300 <- NA_real_
+R1_sim300 <- NA_real_
+R0_sim300 <- NA_real_
+
+# SIMULATION_sim300_data_equivalence <- data.frame(lm_est = NA_real_, lm_se = NA_real_, lm_pval = NA_real_,
+#                         lrt = NA_real_, delta_star = NA_real_,
+#                         R0 = NA_real_, R1 = NA_real_)
+
+SIMULATION_sim300_data_equivalence <- read.csv("..../SIMULATION_sim300_data_equivalence.csv")
+
+for(i in 1:M){
+  
+  data_sim300 <- data_true[sample(rownames(data_true), n_sim300, replace = T),]
+  
+  sim300_H1_0 <- lm(y_H1 ~  X01 + X02 + X03 + X04 + X05, data = data_sim300)
+  sim300_H1_1 <- lm(y_H1 ~ X01 + X02 + X03 + X04 + X05 + X11, data = data_sim300)
+  
+  summary_lm_sim300 <- summary(sim300_H1_1)
+  
+  lm_est_sim300  <- summary_lm_sim300$coefficients["X11","Estimate"]
+  lm_se_sim300 <- summary_lm_sim300$coefficients["X11","Std. Error"]
+  lm_pval_est_sim300  <- summary_lm_sim300$coefficients["X11","Pr(>|t|)"]
+  lm_lrt_est_sim300 = (2*(logLik(sim300_H1_1) - logLik(sim300_H1_0)))
+  delta_star_sim300 = as.numeric(lm_lrt_est_sim300/n_sim300) * (2*k-1)
+  (R0_sim300 <- summary(sim300_H1_0)$r.squared)
+  (R1_sim300 <- (R0_sim300 + delta_star_sim300)/(1 + delta_star_sim300))
+  
+  SIMULATION_sim300_data_equivalence <- as.data.frame(rbind(SIMULATION_sim300_data_equivalence, 
+                                                             c(lm_est_sim300,lm_se_sim300,lm_pval_est_sim300,
+                                                               lm_lrt_est_sim300,delta_star_sim300,
+                                                               R0_sim300,R1_sim300)))
+  
+  write.csv(SIMULATION_sim300_data_equivalence, "..../SIMULATION_sim300_data_equivalence.csv", row.names = F)
+  
+}
+
+
+end.time <- Sys.time()
+(time.taken <- end.time - start.time)
+
+# write.csv(SIMULATION_sim300_data_equivalence, "..../SIMULATION_sim300_data_equivalence.csv", row.names = F)
+
+
+## Calculate impact based on 200 bootstrapped samples from the orginal sample of size 300 and repeat for 2000 times
+
+start.time <- Sys.time()
+
+n_whole = dim(data_true)[1]
+k = 2 + sqrt(2);
+n_sim200 = 200
+
+lm_est_sim200 <- NA_real_
+lm_se_sim200 <- NA_real_
+lm_pval_est_sim200 <- NA_real_
+lm_lrt_est_sim200  <- NA_real_
+delta_star_sim200 <- NA_real_
+R1_sim200 <- NA_real_
+R0_sim200 <- NA_real_
+
+# SIMULATION_sim200_data_equivalence <- data.frame(lm_est = NA_real_, lm_se = NA_real_, lm_pval = NA_real_,
+#                         lrt = NA_real_, delta_star = NA_real_,
+#                         R0 = NA_real_, R1 = NA_real_)
+
+SIMULATION_sim200_data_equivalence <- read.csv("..../SIMULATION_sim200_data_equivalence.csv")
+
+for(i in 1:M){
+  
+  data_sim200 <- data_true[sample(rownames(data_true), n_sim200, replace = T),]
+  
+  sim200_H1_0 <- lm(y_H1 ~  X01 + X02 + X03 + X04 + X05, data = data_sim200)
+  sim200_H1_1 <- lm(y_H1 ~ X01 + X02 + X03 + X04 + X05 + X11, data = data_sim200)
+  
+  summary_lm_sim200 <- summary(sim200_H1_1)
+  
+  lm_est_sim200  <- summary_lm_sim200$coefficients["X11","Estimate"]
+  lm_se_sim200 <- summary_lm_sim200$coefficients["X11","Std. Error"]
+  lm_pval_est_sim200  <- summary_lm_sim200$coefficients["X11","Pr(>|t|)"]
+  lm_lrt_est_sim200 = (2*(logLik(sim200_H1_1) - logLik(sim200_H1_0)))
+  delta_star_sim200 = as.numeric(lm_lrt_est_sim200/n_sim200) * (2*k-1)
+  (R0_sim200 <- summary(sim200_H1_0)$r.squared)
+  (R1_sim200 <- (R0_sim200 + delta_star_sim200)/(1 + delta_star_sim200))
+  
+  SIMULATION_sim200_data_equivalence <- as.data.frame(rbind(SIMULATION_sim200_data_equivalence, 
+                                                            c(lm_est_sim200,lm_se_sim200,lm_pval_est_sim200,
+                                                              lm_lrt_est_sim200,delta_star_sim200,
+                                                              R0_sim200,R1_sim200)))
+  
+  write.csv(SIMULATION_sim200_data_equivalence, "..../SIMULATION_sim200_data_equivalence.csv", row.names = F)
+  
+}
+
+
+end.time <- Sys.time()
+(time.taken <- end.time - start.time)
+
+# write.csv(SIMULATION_sim200_data_equivalence, "C:/Users/midyav01/OneDrive - The Mount Sinai Hospital/MSSM Projects/IC paper/SIMULATION/SIMULATION_sim200_data_equivalence.csv", row.names = F)
+
+require(ggplot2)
+
+SIMULATION_optim_data_equivalence <- read.csv("..../SIMULATION_optim_data_equivalence.csv")
+SIMULATION_sim2500_data_equivalence <- read.csv("..../SIMULATION_sim2500_data_equivalence.csv")
+SIMULATION_sim600_data_equivalence <- read.csv("..../SIMULATION_sim600_data_equivalence.csv")
+SIMULATION_sim500_data_equivalence <- read.csv("..../SIMULATION_sim500_data_equivalence.csv")
+SIMULATION_sim400_data_equivalence <- read.csv("..../SIMULATION_sim400_data_equivalence.csv")
+SIMULATION_sim300_data_equivalence <- read.csv("..../SIMULATION_sim300_data_equivalence.csv")
+SIMULATION_sim200_data_equivalence <- read.csv("..../SIMULATION_sim200_data_equivalence.csv")
+
+optim <- (SIMULATION_optim_data_equivalence$delta_star)
+sim2500 <- (SIMULATION_sim2500_data_equivalence$delta_star)
+sim600 <- (SIMULATION_sim600_data_equivalence$delta_star)
+sim500 <- (SIMULATION_sim500_data_equivalence$delta_star)
+sim400 <- (SIMULATION_sim400_data_equivalence$delta_star)
+sim300 <- (SIMULATION_sim300_data_equivalence$delta_star)
+sim200 <- (SIMULATION_sim200_data_equivalence$delta_star)
+
+
+SIMULATION_data <- data.frame(n = c(5000,2500,600, 500, 400, 300,200), 
+                              
+                       delta_star = c(mean(SIMULATION_optim_data_equivalence$delta_star),
+                                      mean(SIMULATION_sim2500_data_equivalence$delta_star),
+                                      mean(SIMULATION_sim600_data_equivalence$delta_star),
+                                      mean(SIMULATION_sim500_data_equivalence$delta_star),
+                                      mean(SIMULATION_sim400_data_equivalence$delta_star),
+                                      mean(SIMULATION_sim300_data_equivalence$delta_star),
+                                      mean(SIMULATION_sim200_data_equivalence$delta_star)), 
+                       
+                       se_delta_star = c(sd(SIMULATION_optim_data_equivalence$delta_star)/sqrt(2000),
+                                         sd(SIMULATION_sim2500_data_equivalence$delta_star)/sqrt(2000),
+                                         sd(SIMULATION_sim600_data_equivalence$delta_star)/sqrt(2000),
+                                         sd(SIMULATION_sim500_data_equivalence$delta_star)/sqrt(2000),
+                                         sd(SIMULATION_sim400_data_equivalence$delta_star)/sqrt(2000),
+                                         sd(SIMULATION_sim300_data_equivalence$delta_star)/sqrt(2000),
+                                         sd(SIMULATION_sim200_data_equivalence$delta_star)/sqrt(2000)),
+                       
+                       lm_est = c(mean(SIMULATION_optim_data_equivalence$lm_est),
+                                   mean(SIMULATION_sim2500_data_equivalence$lm_est),
+                                  mean(SIMULATION_sim600_data_equivalence$lm_est),
+                                  mean(SIMULATION_sim500_data_equivalence$lm_est),
+                                  mean(SIMULATION_sim400_data_equivalence$lm_est),
+                                   mean(SIMULATION_sim300_data_equivalence$lm_est),
+                                   mean(SIMULATION_sim200_data_equivalence$lm_est)),
+                       
+                       se_lm_est = c(sd(SIMULATION_optim_data_equivalence$lm_est)/sqrt(2000),
+                                      sd(SIMULATION_sim2500_data_equivalence$lm_est)/sqrt(2000),
+                                     sd(SIMULATION_sim600_data_equivalence$lm_est)/sqrt(2000),
+                                     sd(SIMULATION_sim500_data_equivalence$lm_est)/sqrt(2000),
+                                     sd(SIMULATION_sim400_data_equivalence$lm_est)/sqrt(2000),
+                                      sd(SIMULATION_sim300_data_equivalence$lm_est)/sqrt(2000),
+                                      sd(SIMULATION_sim200_data_equivalence$lm_est)/sqrt(2000)),
+                       
+                       pvalue_est = c(mean(SIMULATION_optim_data_equivalence$lm_pval),
+                                      mean(SIMULATION_sim2500_data_equivalence$lm_pval),
+                                      mean(SIMULATION_sim600_data_equivalence$lm_pval),
+                                      mean(SIMULATION_sim500_data_equivalence$lm_pval),
+                                      mean(SIMULATION_sim400_data_equivalence$lm_pval),
+                                      mean(SIMULATION_sim300_data_equivalence$lm_pval),
+                                      mean(SIMULATION_sim200_data_equivalence$lm_pval)),
+                       
+                       se_pvalue_est = c(sd(SIMULATION_optim_data_equivalence$lm_pval)/sqrt(2000),
+                                         sd(SIMULATION_sim2500_data_equivalence$lm_pval)/sqrt(2000),
+                                         sd(SIMULATION_sim600_data_equivalence$lm_pval)/sqrt(2000),
+                                         sd(SIMULATION_sim500_data_equivalence$lm_pval)/sqrt(2000),
+                                         sd(SIMULATION_sim400_data_equivalence$lm_pval)/sqrt(2000),
+                                         sd(SIMULATION_sim300_data_equivalence$lm_pval)/sqrt(2000),
+                                         sd(SIMULATION_sim200_data_equivalence$lm_pval)/sqrt(2000))
+)
+
+SIMULATION_data$lower_delta_star = SIMULATION_data$delta_star - 1.96*SIMULATION_data$se_delta_star
+SIMULATION_data$upper_delta_star = SIMULATION_data$delta_star + 1.96*SIMULATION_data$se_delta_star
+SIMULATION_data$n <- as.factor(SIMULATION_data$n)
+
+
+SIMULATION_data_equivalence_data <- data.frame(n = c(2500,600, 500, 400, 300 ,200),
+                                        
+                                        ratio_est = c(mean(sim2500)/mean(optim)- cov(sim2500,optim)/mean(optim)^2 + var(optim)*mean(sim2500)/mean(optim)^3,
+                                                      mean(sim600)/mean(optim)- cov(sim600,optim)/mean(optim)^2 + var(optim)*mean(sim600)/mean(optim)^3,
+                                                      mean(sim500)/mean(optim)- cov(sim500,optim)/mean(optim)^2 + var(optim)*mean(sim500)/mean(optim)^3,
+                                                      mean(sim400)/mean(optim)- cov(sim400,optim)/mean(optim)^2 + var(optim)*mean(sim400)/mean(optim)^3,
+                                                      mean(sim300)/mean(optim)- cov(sim300,optim)/mean(optim)^2 + var(optim)*mean(sim300)/mean(optim)^3,                                                    
+                                                      mean(sim200)/mean(optim)- cov(sim200,optim)/mean(optim)^2 + var(optim)*mean(sim200)/mean(optim)^3),
+                                        
+                                        var_ratio_est = c((mean(sim2500)/mean(optim))^2*(var(sim2500)/mean(sim2500)^2 + var(optim)/mean(optim)^2) - 2*cov(sim2500,optim)/(mean(sim2500)*mean(optim)),
+                                                          (mean(sim600)/mean(optim))^2*(var(sim600)/mean(sim600)^2 + var(optim)/mean(optim)^2) - 2*cov(sim600,optim)/(mean(sim600)*mean(optim)),
+                                                          (mean(sim500)/mean(optim))^2*(var(sim500)/mean(sim500)^2 + var(optim)/mean(optim)^2) - 2*cov(sim500,optim)/(mean(sim500)*mean(optim)),
+                                                          (mean(sim400)/mean(optim))^2*(var(sim400)/mean(sim400)^2 + var(optim)/mean(optim)^2) - 2*cov(sim400,optim)/(mean(sim400)*mean(optim)),
+                                                          (mean(sim300)/mean(optim))^2*(var(sim300)/mean(sim300)^2 + var(optim)/mean(optim)^2) - 2*cov(sim300,optim)/(mean(sim300)*mean(optim)),
+                                                          (mean(sim200)/mean(optim))^2*(var(sim200)/mean(sim200)^2 + var(optim)/mean(optim)^2) - 2*cov(sim200,optim)/(mean(sim200)*mean(optim)))
+)
+
+
+SIMULATION_data_equivalence_data$log_ratio_est <- log(SIMULATION_data_equivalence_data$ratio_est)
+SIMULATION_data_equivalence_data$log_var_ratio_est <-  SIMULATION_data_equivalence_data$var_ratio_est / SIMULATION_data_equivalence_data$ratio_est^2
+SIMULATION_data_equivalence_data$upper <- SIMULATION_data_equivalence_data$log_ratio_est + qt(0.975, df = length(optim) -1)*sqrt(SIMULATION_data_equivalence_data$log_var_ratio_est)/sqrt(length(optim))
+SIMULATION_data_equivalence_data$lower <- SIMULATION_data_equivalence_data$log_ratio_est - qt(0.975, df = length(optim) -1)*sqrt(SIMULATION_data_equivalence_data$log_var_ratio_est)/sqrt(length(optim))
+SIMULATION_data_equivalence_data$n <- as.factor(SIMULATION_data_equivalence_data$n)
+
+p1 <- ggplot(SIMULATION_data, aes(x=n, y=delta_star*100)) + 
+  geom_errorbar(aes(ymin=lower_delta_star*100, ymax=upper_delta_star*100), colour="black", width=.8, position=position_dodge(0.1)) +
+  geom_line(position=position_dodge(0.1), lwd =1) +
+  geom_point(position=position_dodge(0.1), size=5, shape=21, fill="black") +
+  xlab("Sample sizes") +
+  ylab("Variation (%)")  +  
+  labs(tag = "(A)") +
+  ggtitle("Impacts with respect to sample sizes")  +
+  theme_bw()  +
+  theme(plot.title=element_text(size=14,face="bold"),
+        plot.tag = element_text(size = 14,face = "bold"),
+        axis.text.x=element_text(face="bold"),
+        axis.text.y = element_text(size = 12,face = "bold"),
+        axis.title=element_text(size=12,face="bold"))
+
+eplot <- ggplot(SIMULATION_data_equivalence_data, aes(x=n, y=log_ratio_est)) + 
+  geom_errorbar(aes(ymin=lower, ymax=upper), colour="black", width=.8, position=position_dodge(0.1)) +
+  geom_line(position=position_dodge(0.1), lwd =1) +
+  geom_point(position=position_dodge(0.1), size=5, shape=21, fill="black") +
+  xlab("Sample sizes") +
+  ylab("log (Ratio Estimate)")  +  
+  labs(tag = "(C)") +
+  ggtitle("log (Ratio Estimates) and Equivalence Bounds")  + 
+  theme_bw()  +
+  theme(plot.title=element_text(size=14,face="bold"),
+        plot.tag = element_text(size = 14,face = "bold"),
+        axis.text.x=element_text(face="bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title=element_text(size=12,face="bold")) +
+  geom_hline(yintercept = c(log(10/7),log(0.7)), colour = "red", size = 2) +
+  geom_hline(yintercept = c(log(10/8),log(0.8)), colour = "blue", size = 2) +
+  geom_hline(yintercept = c(0), colour = "black", size = 0.5) + 
+  annotate("text", x = 6, y = 0.4, label = "log (10/7)",
+           colour = "red", fontface = 7) +
+  annotate("text", x = 3, y = -0.4, label = "log (7/10)",
+           colour = "red", fontface = 7) +
+  annotate("text", x = 6, y = 0.27, label = "log (10/8)",
+           colour = "blue", fontface = 7) +
+  annotate("text", x = 3, y = -0.25, label = "log (8/10)",
+           colour = "blue", fontface = 7) 
+
+
+est_bar <- ggplot(SIMULATION_data, aes(x=n, y=abs(lm_est) )) + 
+  geom_bar(stat="identity", color="black", 
+           position=position_dodge()) +
+  geom_errorbar(aes(ymin=abs(lm_est  -2*se_lm_est)   , ymax= abs (lm_est  +2*se_lm_est)), width=.2,
+                position=position_dodge(.9)) + ylim(c(0, 0.5))  + xlab("Sample sizes") +
+  ylab("")  +  
+  labs(tag = "(B)") +
+  ggtitle("Absolute value of beta estimate of the exposure")  + 
+  theme_bw()  +
+  theme(plot.title=element_text(size=14,face="bold"),
+        plot.tag = element_text(size = 14,face = "bold"),
+        axis.text.x=element_text(face="bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title=element_text(size=12,face="bold"))
+
+
+pval_bar <- ggplot(SIMULATION_data, aes(x=n, y=-log(pvalue_est,base = exp(1))  )) + 
+  geom_bar(stat="identity", color="black", 
+           position=position_dodge()) +
+  geom_errorbar(aes(ymin= -log(pvalue_est + se_pvalue_est,base = exp(1)), 
+                    ymax = -log(pvalue_est  - se_pvalue_est, base = exp(1))), width=.2,
+                position=position_dodge(.9)) + xlab("Sample sizes") +
+  ylab("")  +      
+  labs(tag = "(D)") +
+  ggtitle("-log(pvalues)")  + 
+  theme_bw()  +
+  theme(plot.title=element_text(size=14,face="bold"),
+        plot.tag = element_text(size = 14,face = "bold"),
+        axis.text.x=element_text(face="bold"),
+        axis.text.y = element_text(face = "bold"),
+        axis.title=element_text(size=12,face="bold")) +
+  geom_hline(yintercept = -log(0.05, base = exp(1)), colour = "red", size = 2) +
+  annotate("text", x = 2, y = 4.00, label = "-log(0.05)",
+           colour = "red", fontface = 7)
+
+ggpubr::ggarrange(p1,est_bar, eplot, pval_bar, ncol = 2,nrow = 2,common.legend = T, legend = "bottom")
+
