@@ -1,0 +1,63 @@
+# Codes for getting NHANES 2017-2018 data 
+
+# Download demographic data with no NA
+
+demo_H = data.table(nhanes('DEMO_J'),YEAR='2017-2018')
+bmi_H = data.table(nhanes('BMX_J'), YEAR = '2017-2018')
+demo_H = merge(demo_H,bmi_H,by=c("SEQN","YEAR"))
+
+# Download Demographics data with no NA 
+
+demo_H = demo_H[WTMEC2YR>0,.(SEQN,RIAGENDR,RIDAGEYR,WTMEC2YR,INDFMPIR,RIDRETH1,BMXBMI,YEAR)]
+demo_H[,SUM_MEC:=sum(demo_H$WTMEC2YR)]
+demo_H[, check := rowSums(.SD), .SDcol=c('RIAGENDR','RIDAGEYR','WTMEC2YR', 'INDFMPIR','RIDRETH1','BMXBMI')]
+demo_H = demo_H[!is.na(check)]
+demo_H[,check:=NULL]
+
+# Download PFCs data with no NA
+
+pfc_H = data.table(nhanes("PFAS_J"),YEAR='2017-2018')
+pfc_list <- c("LBXPFDE","LBXPFHS","LBXMPAH","LBXPFNA","LBXPFUA","LBXNFOA","LBXBFOA","LBXNFOS","LBXMFOS")
+pfc_H = pfc_H[,c("SEQN",pfc_list,"YEAR"),with=F]
+pfc_H[, check := rowSums(.SD), .SDcol=pfc_list]
+pfc_H = pfc_H[!is.na(check)]
+pfc_H[,check:=NULL]
+
+# Download Metal data with no NA
+
+metal_H = data.table(nhanes("PBCD_J"),YEAR='2017-2018')
+metal_list <- c("LBXBCD","LBXBPB","LBXBMN","LBXTHG","LBXBSE")
+metal_H = metal_H[,c("SEQN",metal_list,"YEAR"),with=F]
+metal_H[, check := rowSums(.SD), .SDcol=metal_list]
+metal_H = metal_H[!is.na(check)]
+metal_H[,check:=NULL]
+
+# Download HDL, LDL, Trig, glychaemoglobin, insulin,  data with no NA
+
+hdl_H = data.table(nhanes("HDL_J"),YEAR='2017-2018')
+trig_H = data.table(nhanes("TRIGLY_J"),YEAR='2017-2018')
+tchol_H = data.table(nhanes("TCHOL_J"),YEAR='2017-2018')
+
+bones_H = merge(hdl_H,trig_H,by=c("SEQN","YEAR"))
+bones_H = merge(bones_H,tchol_H,by=c("SEQN","YEAR"))
+
+bones_H = bones_H[,.(SEQN,LBXTC,LBXTR,LBDLDL,LBDHDD,YEAR)]
+bones_H[, check := rowSums(.SD), .SDcol=c('LBXTC','LBXTR','LBDLDL','LBDHDD')]
+bones_H = bones_H[!is.na(check)]
+bones_H[,check:=NULL]
+
+
+# Download smoking status data
+
+SMQ = data.table(nhanes("SMQ_J"),YEAR='2017-2018')
+SMQ = SMQ[,.(SEQN,SMQ020,SMQ040,YEAR)]
+SMQ = SMQ[!is.na(SMQ020)]
+SMQ[,smoking_status:=ifelse(SMQ020==2,0,ifelse(SMQ040==1 | SMQ040==2,2,1))]
+SMQ = SMQ[!is.na(smoking_status),.(SEQN,smoking_status,YEAR)]
+
+core_H = Reduce(function(...) merge(...,by=c("SEQN","YEAR")), list(demo_H,pfc_H,metal_H,bones_H,SMQ))
+core_H = as.data.frame(core_H)
+
+
+# These codes are modified based on original codes from Nicolo Foppa Pedretti (https://www.medrxiv.org/content/10.1101/19010710v1)
+
