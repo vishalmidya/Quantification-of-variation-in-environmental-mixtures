@@ -82,7 +82,7 @@ make.y.under.H1 <- function(n, p0, p1, sigma2,R2_0, R2_1, X0,X1){
   
 }
 
-# Numerically estimate T, the calibrated cutoff
+# Numerically estimate T, the calibrated cutoff with specified p_1
 
 cutoff_finder_normal = function(p1, n, delta)
 {
