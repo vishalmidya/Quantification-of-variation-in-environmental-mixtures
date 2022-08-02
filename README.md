@@ -1,3 +1,3 @@
 # Quantification-of-variation-in-environmental-mixtures
-Codes for the paper - Impact quantification of environmental mixtures using Cohen's f^2 in a type 1 and type 2 error balanced framework
+Codes for the paper - Quantifying the Effect Size of Exposure-Outcome Association Using $\delta$-score: Application to Environmental Chemical Mixture studies
 
