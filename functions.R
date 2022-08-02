@@ -1,4 +1,4 @@
-# Creates the Variance-covariance matrix
+# Creates the Variance-covariance matrix with mean correlation rho
 
 make.SIGMA <- function(rho,dimension){
   SIGMA = matrix(NA,dimension,dimension)
@@ -17,13 +17,13 @@ make.SIGMA <- function(rho,dimension){
   (SIGMA + t(SIGMA))/2
 }
 
-# Design matrix for baseline covariates and confounders
+# Design matrix for baseline covariates and confounders with dimension p0
 
 make.X0 <- function(n, rho, p0){
   X0 <- (mvtnorm::rmvnorm(n, mean = rep(0, nrow(make.SIGMA(rho, p0))), sigma = make.SIGMA(rho, p0)))
 }
 
-# Design matrix for exposures or exposure mixture 
+# Design matrix for exposures or exposure mixture with dimension p1
 
 make.X1 <- function(n, rho, p0, p1){
   X0 <- make.X0(n, rho, p0)
@@ -65,14 +65,14 @@ make.B1 <- function(n, p0, p1, R2_0, R2_1, sigma2,X0,X1){
   
 }
 
-# Generate y under the null
+# Generate y under the null distribution
 
 make.y.under.H0 <- function(n, p0, sigma2,R2_0, X0){
   
   (X0 %*%  (matrix(rep(1,p0), p0 ,1) %*% make.B0(n, p0, R2_0, sigma2, X0)) + rnorm(n,0, sigma2))
 }
 
-# Generate y under the alternative
+# Generate y under the alternative distribution
 
 make.y.under.H1 <- function(n, p0, p1, sigma2,R2_0, R2_1, X0,X1){
   
@@ -100,14 +100,14 @@ numerical_rate_normal = function(p1, n,  delta){
   
 }
 
-# Calculates type 2 error  
+# Calculates type 2 error committed by using T - error calibrated cutoff
 
 beta_func <- function(p1, n, delta, epsilon){
   T = cutoff_finder_normal(p1, n, delta)
   pnorm((T - p1 - n*epsilon)/sqrt(2*(p1 + 2*n*epsilon)))
 }
 
-# Numerical approximation of log(Type 1) or log(type 2) error based on equation 6
+# Numerical approximation of log(Type 1) or log(type 2) error based on equation 3
 
 numerical_log_error <- function(p1, n, delta){
   T = cutoff_finder_normal(p1, n, delta)
