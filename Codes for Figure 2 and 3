@@ -60,7 +60,7 @@ core_H = as.data.frame(core_H)
 
 
 # These codes are modified based on original codes from Nicolo Foppa Pedretti (https://www.medrxiv.org/content/10.1101/19010710v1)
-# Figure 3 and 4 are based on similar codes from Figure 2 but with a different dataset and uses WQS as its main exposure mixture model.
+# Figure 2 and 3 are based on similar codes from Figure 1 but with a different dataset and uses WQS as its main exposure mixture model.
 # Below we present the codes for both continuous and binary outcomes for LBDLDL in case of PFAS exposures 
 
 # Optimal impact for Continuous LBDLDL
