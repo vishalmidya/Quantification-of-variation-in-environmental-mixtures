@@ -2,8 +2,9 @@
 
 ## Create Simulated Data set
 
-n=300; p0=5; p1=1; rho=0.3; sigma2=5; R2_0=0.2; k = 2 + sqrt(2)
+n=300; p0=5; p1=1; rho=0.3; sigma2=5; R2_0=0.2; k = 2 + sqrt(2); M = 1e2
 delta = 0.01
+delta_score <- delta * (2*k-1)
 
 set.seed(111)
 X0 <- make.X0(n, rho, p0)
